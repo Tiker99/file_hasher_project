@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+    api:
+        build: 
+            context: .
+            dockerfile: docker/api/Dockerfile
+        env_file: ./environment
+        depends_on:
+            - rabbitmq
+            - redis
+        volumes:
+            - ./api:/usr/src/api/
+        ports:
+            - "8000:8000"
+    worker-1:
+        container_name: worker-1
+        build:
+            context: .
+            dockerfile: docker/celery/Dockerfile
+        env_file: ./environment
+        environment:
+            - WORKER_ID=1
+        volumes:
+            - ./api:/usr/src/api/
+        depends_on:
+            - rabbitmq
+            - redis
+    worker-2:
+        container_name: worker-2
+        build:
+            context: .
+            dockerfile: docker/celery/Dockerfile
+        env_file: ./environment
+        environment:
+            - WORKER_ID=2
+        volumes:
+            - ./api:/usr/src/api/
+        depends_on:
+            - rabbitmq
+            - redis
+    redis:
+        hostname: redis
+        image: redis:latest
+        ports:
+            - "6379:6379"
+    rabbitmq:
+        hostname: rabbitmq
+        image: rabbitmq:latest
+        volumes:
+            - "./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf"
+        ports:
+            - "5672:5672"
+    postgres:
+        container_name: postgres
+        build: ./docker/postgres/
+        restart: always
+        environment:
+            POSTGRES_PASSWORD_FILE: /docker-entrypoint-initdb.d/postgres_password
+            TZ: Asia/Yerevan
+        volumes:
+            - ./DB/data:/var/lib/postgresql/data
+        shm_size: 512m

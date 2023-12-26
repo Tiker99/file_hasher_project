@@ -1,0 +1,15 @@
+FROM python:3.8
+
+COPY ./api/celery_workers /usr/src/api/celery_workers
+
+COPY ./api /usr/src/api/
+
+COPY ./api/requirements.txt /usr/src/api/requirements.txt
+
+RUN pip3 install --upgrade pip
+
+RUN pip3 install -r /usr/src/api/requirements.txt
+
+WORKDIR /usr/src/
+
+CMD celery -A api.celery_workers.worker worker --loglevel=DEBUG --logfile=api/logs/celery.log
